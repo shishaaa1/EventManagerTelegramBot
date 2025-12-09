@@ -8,11 +8,19 @@ namespace EventManagerTelegramBot.Classes
 {
     public class Events
     {
-        public DateTime Time { get; set; }
-        public string Message { get; set; }
+        public int Id { get; set; }
+        public long UserId { get; set; }
+        public DateTime EventTime { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public bool IsRecurring { get; set; }
+        public string? RecurringDays { get; set; }
+        public DateTime? LastTriggered { get; set; }
+
+        public Events() { }
+
         public Events(DateTime time, string message)
         {
-            Time = time;
+            EventTime = time;
             Message = message;
         }
     }
