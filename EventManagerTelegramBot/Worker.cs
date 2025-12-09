@@ -1,6 +1,7 @@
 using EventManagerTelegramBot.Classes;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace EventManagerTelegramBot
@@ -29,7 +30,7 @@ namespace EventManagerTelegramBot
             "Событие удалено.",
             "Все события удалены."
         };
-        
+
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
@@ -78,6 +79,59 @@ namespace EventManagerTelegramBot
             inlineKeyboards.Add(new InlineKeyboardButton("Удалить", Message));
             return new InlineKeyboardMarkup(inlineKeyboards);
         }
+        ///<summary>
+        ///Метод отправки сообщений
+        /// </summary>
+        ///<param name="chatId">Чат Id</param>
+        ///<param name="typeMessage">Тип сообщения</param>
+        public async void SendMessage(long chatId, int typeMessage)
+        {
+            if (typeMessage != 3)
+            {
+                await TelegramBotClient.SendMessage
+                    (
+                        chatId,
+                        Messages[typeMessage],
+                        ParseMode.Html,
+                        replyMarkup: GetButtons()
+                    );
+            }
+            else if (typeMessage == 3)
+                await TelegramBotClient.SendMessage(
+                    chatId,
+                    "Указанное вами время и дата не могут быть установлены, "
+                    + $"потому-что сейчас уже:{DateTime.Now.ToString("HH.mm dd.MM.yyyy")}");
+        }
+        ///<summary>
+        ///Команды
+        /// </summary>
+        ///<param name="chatId">Чат Id</param>
+        ///<param name="command">Команда</param>
+        public async void Command(long chatId, string command)
+        {
+            if (command.ToLower() == "/start") SendMessage(chatId, 0);
+            else if (command.ToLower() == "/create_tasks") SendMessage(chatId, 1);
+            else if (command.ToLower() == "/list_tasks")
+            {
+                Users User = Users.Find(x => x.IdUser == chatId);
+                if(User==null) SendMessage(chatId, 4);
+                else if (User.Events.Count==0) SendMessage(chatId, 4);
+                else
+                {
+                    foreach(Events Event in User.Events)
+                    {
+                        await TelegramBotClient.SendMessage
+                            (
+                            chatId,
+                            $"Уведомить пользователя: {Event.Time.ToString("HH:mm dd:MM:yyyy")}"
+                            + $"\nСообщение: {Event.Message}",
+                            replyMarkup: DeleteEvent(Event.Message)
+                            );
+                    }
+                }
+            }
+        }
+
 
     }
 }
